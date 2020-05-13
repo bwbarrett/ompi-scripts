@@ -3,10 +3,69 @@
 # abort on error
 set -e
 
-# sigh; this probably isn't the most user friendly thing I've ever done...
-for var in "$@"; do
-    eval $@
+BUILD_32BIT=0
+COMPILER=
+DISTCHECK=1
+AUTOGEN_ARGS=
+CONFIGURE_ARGS=
+MAKE_ARGS=
+MAKE_J="-j 8"
+PREFIX="${WORKSPACE}/install"
+
+#
+# Options Parsing
+#
+
+PARAMS=""
+while (( "$#" )); do
+  case "$1" in
+    --32bit-build)
+      BUILD_32BIT=1
+      shift
+      ;;
+    --distcheck)
+      DISTCHECK=1
+      shift
+      ;;
+    --autogen-args)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        AUTOGEN_ARGS=$2
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    --configure-args)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        CONFIGURE_ARGS=$2
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    --compiler)
+      if [ -n "$2" ] && [ ${2:0:1} != "-" ]; then
+        COMPILER=$2
+        shift 2
+      else
+        echo "Error: Argument for $1 is missing" >&2
+        exit 1
+      fi
+      ;;
+    -*|--*=) # unsupported flags
+      echo "Error: Unsupported flag $1" >&2
+      exit 1
+      ;;
+    *) # preserve positional arguments
+      PARAMS="$PARAMS $1"
+      shift
+      ;;
+  esac
 done
+# set positional arguments in their proper place
+eval set -- "$PARAMS"
 
 #
 # Start by figuring out what we are...
@@ -23,123 +82,118 @@ fi
 echo "--> platform: $PLATFORM_ID"
 echo "--> version: $VERSION_ID"
 
-AUTOGEN_ARGS=
-CONFIGURE_ARGS=
-MAKE_ARGS=
-MAKE_J="-j 8"
-PREFIX="${WORKSPACE}/install"
-
 #
 # See if builder provided a compiler we should use, and translate it
 # to CONFIGURE_ARGS
 #
 case ${PLATFORM_ID} in
     rhel)
-	case "$Compiler" in
+	case "$COMPILER" in
 	    gcc48|"")
 		echo "--> Using default compilers"
 		;;
 	    *)
-		echo "Unsupported compiler ${Compiler}.  Aborting"
+		echo "Unsupported compiler ${COMPILER}.  Aborting"
 		exit 1
 		;;
 	esac
 	;;
     amzn)
-	case "$Compiler" in
+	case "$COMPILER" in
 	    "")
 		echo "--> Using default compilers"
 		;;
 	    gcc44)
-		CONFIGURE_ARGS="CC=gcc44 CXX=g++44 FC=gfortran44"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc44 CXX=g++44 FC=gfortran44"
 		;;
 	    gcc48)
-		CONFIGURE_ARGS="CC=gcc48 CXX=g++48 FC=gfortran48"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc48 CXX=g++48 FC=gfortran48"
 		;;
 	    clang36)
-		CONFIGURE_ARGS="CC=clang CXX=clang++ --disable-mpi-fortran"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang CXX=clang++ --disable-mpi-fortran"
 		;;
 	    *)
-		echo "Unsupported compiler ${Compiler}.  Aborting"
+		echo "Unsupported compiler ${COMPILER}.  Aborting"
 		exit 1
 		;;
 	esac
 	;;
     ubuntu)
-        # On Ubuntu, gcc 4.x was packaged as major.minor version
-        # packages. 5.x and later was packaged as major version only.
-        # Clang 6.x and earlier was packaged as major.minor, while
-        # Clang 7 and lager was packaged as major version only.
-	case "$Compiler" in
+	case "$COMPILER" in
 	    "")
 		echo "--> Using default compilers"
 		;;
-	    gcc4*)
-                version=`echo "$Compiler" | sed -e 's/gcc4\([0-9]*\)/4.\1/'`
-		CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
+	    gcc47)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-4.7 CXX=g++-4.7 FC=gfortran-4.7"
 		;;
-	    gcc*)
-                version=`echo "$Compiler" | sed -e 's/gcc\([0-9]*\)/\1/'`
-		CONFIGURE_ARGS="CC=gcc-${version} CXX=g++-${version} FC=gfortran-${version}"
+	    gcc48)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-4.8 CXX=g++-4.8 FC=gfortran-4.8"
 		;;
-	    clang3*|clang4*|clang5*|clang6*)
-                version=`echo "$Compiler" |  sed -e 's/clang\([0-9]\)\([0-9]*\)/\1.\2/'`
-		CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
+	    gcc49)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-4.9 CXX=g++-4.9 FC=gfortran-4.9"
 		;;
-	    clang*)
-                version=`echo "$Compiler" | sed -e 's/clang\([0-9]*\)/\1/'`
-		CONFIGURE_ARGS="CC=clang-${version} CXX=clang++-${version} --disable-mpi-fortran"
+	    gcc5)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-5 CXX=g++-5 FC=gfortran-5"
+		;;
+	    clang36)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang-3.6 CXX=clang++-3.6 --disable-mpi-fortran"
+		;;
+	    clang37)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang-3.7 CXX=clang++-3.7 --disable-mpi-fortran"
+		;;
+	    clang38)
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=clang-3.8 CXX=clang++-3.8 --disable-mpi-fortran"
 		;;
 	    *)
-		echo "Unsupported compiler ${Compiler}.  Aborting"
+		echo "Unsupported compiler ${COMPILER}.  Aborting"
 		exit 1
 		;;
 	esac
 	;;
     sles)
-	case "$Compiler" in
+	case "$COMPILER" in
 	    "")
 		echo "--> Using default compilers"
 		;;
 	    gcc48)
-		CONFIGURE_ARGS="CC=gcc-48 CXX=g++-48 FC=gfortran-48"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-48 CXX=g++-48 FC=gfortran-48"
 		;;
 	    gcc5)
-		CONFIGURE_ARGS="CC=gcc-5 CXX=g++-5 FC=gfortran-5"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-5 CXX=g++-5 FC=gfortran-5"
 		;;
 	    gcc6)
-		CONFIGURE_ARGS="CC=gcc-6 CXX=g++-6 FC=gfortran-6"
+		CONFIGURE_ARGS="$CONFIGURE_ARGS CC=gcc-6 CXX=g++-6 FC=gfortran-6"
 		;;
 	    *)
-		echo "Unsupported compiler ${Compiler}.  Aborting"
+		echo "Unsupported compiler ${COMPILER}.  Aborting"
 		exit 1
 		;;
 	esac
 	;;
     FreeBSD)
-	CONFIGURE_ARGS="LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
+	CONFIGURE_ARGS="$CONFIGURE_ARGS LDFLAGS=-Wl,-rpath,/usr/local/lib/gcc5 --with-wrapper-ldflags=-Wl,-rpath,/usr/local/lib/gcc5"
 	;;
 esac
+
+if test "$BUILD_32BIT" = "1" ; then
+    CONFIGURE_ARGS="$CONFIGURE_ARGS CFLAGS=-m32 CXXFLAGS=-m32 FCFLAGS=-m32 LDFLAGS=-m32"
+fi
 
 echo "--> Compiler setup: $CONFIGURE_ARGS"
 
 #
 # Add any Autogen or Configure arguments provided by the builder job
 #
-if test "$AUTOGEN_OPTIONS" != ""; then
+if test "$AUTOGEN_ARGS" != ""; then
     # special case, to work around the fact that Open MPI can't build
     # when there's a space in the build path name (sigh)
-    if test "$AUTOGEN_OPTIONS" = "--no-orte"; then
-	AUTOGEN_OPTIONS="--no-orte --no-ompi"
+    if test "$AUTOGEN_ARGS" = "--no-orte"; then
+	AUTOGEN_ARGS="--no-orte --no-ompi"
     fi
-    echo "--> Adding autogen arguments: $AUTOGEN_OPTIONS"
-    AUTOGEN_ARGS="${AUTOGEN_ARGS} ${AUTOGEN_OPTIONS}"
 fi
 
-if test "$CONFIGURE_OPTIONS" != ""; then
-    echo "--> Adding configure arguments: $CONFIGURE_OPTIONS"
-    CONFIGURE_ARGS="${CONFIGURE_ARGS} ${CONFIGURE_OPTIONS}"
-fi
+echo "--> Autogen arguments: $AUTOGEN_ARGS"
+echo "--> Configure arguments: $CONFIGURE_ARGS"
 
 #
 # Build.
@@ -191,7 +245,7 @@ fi
 
 # shortcut for the distcheck case, as it won't run any tests beyond
 # the build-in make check tests.
-if test "${MAKE_DISTCHECK}" != ""; then
+if test "${DISTCHECK}" = "1"; then
     echo "--> running make ${MAKE_ARGS} distcheck"
     make ${MAKE_ARGS} distcheck
     exit 0
