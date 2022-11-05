@@ -27,8 +27,6 @@ node("ubuntu_20.04") {
         }
 
 	stage('Tarball Download') {
-              def snapshot_version = ""
-
 	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O"
   	      snapshot_version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
 
