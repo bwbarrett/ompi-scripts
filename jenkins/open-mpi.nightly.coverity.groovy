@@ -11,7 +11,7 @@
 currentBuild.displayName = "#${currentBuild.number}"
 currentBuild.description = "description\n"
 
-node {
+node("ubuntu_20.04") {
 	stage('Hello') {
               def version = ""
 
@@ -19,7 +19,8 @@ node {
   	      version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
   	      tarball_name = "openmpi-${version}.tar.gz"
   	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
-  	      sh "tar -xf ${tarball_name}"
-  	      sh ls -lR
+  	      sh "mkdir scratch"
+	      sh "mkdir tools"
+	      sh "python3 ompi-scripts/nightly/Coverity.py --log-level DEBUG --build-root scratch --source-tarball ${tarball_name} --tool-dir tools --project-name \"Open MPI\" --project-prefix openmpi --token-file token --configure-args \"--enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-usnic" --make-args \"make -j 2\" --email \"jsqures@cisco.com\""
         }
 }
