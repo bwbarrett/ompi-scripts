@@ -14,7 +14,6 @@ currentBuild.description = "description\n"
 pipeline {
     agent any
 
-    stages {
         stage('Hello') {
 	    	  sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O latest_snapshot.txt"
 		  version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
@@ -23,5 +22,4 @@ pipeline {
 		  sh "tar -xf ${tarball_name}"
 		  sh ls -lR
         }
-    }
 }
