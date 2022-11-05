@@ -21,6 +21,6 @@ node("ubuntu_20.04") {
   	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
   	      sh "mkdir -p scratch"
 	      sh "mkdir -p tools"
-	      sh "ls -lR"
+	      sh "ls -lR ${WORKSPACE}"
         }
 }
