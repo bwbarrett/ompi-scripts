@@ -22,7 +22,7 @@ node("ubuntu_20.04") {
         }
 
         stage('Coverity Tools Download') {
-              mkdir -p ${WORKSPACE}/coverity-tool'
+              sh("mkdir -p ${WORKSPACE}/coverity-tool")
 	      echo 'To Do'
         }
 
