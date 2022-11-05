@@ -15,10 +15,10 @@ node {
 	stage('Hello') {
               def version = ""
 
-	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O latest_snapshot.txt"
+	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O"
   	      version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
   	      tarball_name = "openmpi-${version}.tar.gz"
-  	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O ${tarball_name}"
+  	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
   	      sh "tar -xf ${tarball_name}"
   	      sh ls -lR
         }
