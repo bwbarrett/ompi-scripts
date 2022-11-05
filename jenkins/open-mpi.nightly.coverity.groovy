@@ -8,19 +8,39 @@
 //   ompi/                 Open MPI source tree
 //   ompi-scripts/         ompi-scripts master checkout
 
+def coverity_tool = "https://scan.coverity.com/download/cxx/linux64"
+
+def snapshot_version = ""
+def tarball_name = ""
+
 currentBuild.displayName = "#${currentBuild.number}"
-currentBuild.description = "description\n"
+currentBuild.description = "Coverity Nightly Build for Open MPI\n"
 
 node("ubuntu_20.04") {
-	stage('Checkout') {
-              def version = ""
+        stage('Tools Checkout') {
+              checkout(changelog: false, poll: false, scm: scm)
+        }
+
+        stage('Coverity Tools Download') {
+              mkdir -p ${WORKSPACE}/coverity-tool'
+	      echo 'To Do'
+        }
+
+	stage('Tarball Download') {
+              def snapshot_version = ""
 
 	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O"
-  	      version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
-  	      tarball_name = "openmpi-${version}.tar.gz"
+  	      snapshot_version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
+
+	      currentBuild.displayName = "${currentBuild.displayName} - ${snapshot_version}"
+	      currentBuild.description = "${currentBuild.description} for version ${snapshot_version}"
+
+  	      tarball_name = "openmpi-${snapshot_version}.tar.gz"
   	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
-  	      sh "mkdir -p scratch"
-	      sh "mkdir -p tools"
 	      sh "ls -lR ${WORKSPACE}"
+        }
+
+        stage('Coverity Build') {
+			
         }
 }
