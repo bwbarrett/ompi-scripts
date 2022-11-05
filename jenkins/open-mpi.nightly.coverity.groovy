@@ -21,6 +21,6 @@ node("ubuntu_20.04") {
   	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
   	      sh "mkdir scratch"
 	      sh "mkdir tools"
-	      sh "python3 ompi-scripts/nightly/Coverity.py --log-level DEBUG --build-root scratch --source-tarball ${tarball_name} --tool-dir tools --project-name \\"Open MPI\\" --project-prefix openmpi --token-file token --configure-args \\"--enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-usnic\\" --make-args \\"make -j 2\\" --email \\"jsqures@cisco.com\""
+	      sh "python3 ompi-scripts/nightly/Coverity.py --log-level DEBUG --build-root scratch --source-tarball ${tarball_name} --tool-dir tools --project-name OpenMPI --project-prefix openmpi --token-file token"
         }
 }
