@@ -5,8 +5,8 @@
 //
 // WORKSPACE Layout:
 //   scratch/
-//   ompi/                 Open MPI source tree
 //   ompi-scripts/         ompi-scripts master checkout
+//   build/                build root
 
 def coverity_tool = "https://scan.coverity.com/download/cxx/linux64"
 
@@ -27,18 +27,18 @@ node("ubuntu_20.04") {
         }
 
 	stage('Tarball Download') {
-	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt -O"
+	      sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt")
   	      snapshot_version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
 
 	      currentBuild.displayName = "${currentBuild.displayName} - ${snapshot_version}"
 	      currentBuild.description = "${currentBuild.description} for version ${snapshot_version}"
 
   	      tarball_name = "openmpi-${snapshot_version}.tar.gz"
-  	      sh "curl https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name} -O"
-	      sh "ls -lR ${WORKSPACE}"
+  	      sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name}")
+	      sh("ls -lR ${WORKSPACE}")
         }
 
         stage('Coverity Build') {
-	     sh("echo to do")
+	     sh("Python ompi-scripts/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
         }
 }
