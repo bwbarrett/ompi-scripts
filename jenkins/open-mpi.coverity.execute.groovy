@@ -16,7 +16,7 @@ def tarball_name = ""
 currentBuild.displayName = "#${currentBuild.number}"
 currentBuild.description = "Coverity Nightly Build for Open MPI\n"
 
-node("ubuntu_20.04") {
+node("ubuntu_26.04-x86_64") {
         stage('Tools Checkout') {
               checkout(changelog: false, poll: false, scm: scm)
         }
@@ -39,6 +39,6 @@ node("ubuntu_20.04") {
         }
 
         stage('Coverity Build') {
-	     sh("python ${WORKSPACE}/ompi-scripts/nightly-tarball/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
+	     sh("python3 ${WORKSPACE}/ompi-scripts/nightly-tarball/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project-name 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
         }
 }
