@@ -39,6 +39,6 @@ node("ubuntu_20.04") {
         }
 
         stage('Coverity Build') {
-	     sh("Python ompi-scripts/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
+	     sh("python ompi-scripts/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
         }
 }
