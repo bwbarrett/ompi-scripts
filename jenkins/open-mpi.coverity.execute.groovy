@@ -23,7 +23,7 @@ node("ubuntu_20.04") {
 
         stage('Coverity Tools Download') {
               sh("mkdir -p ${WORKSPACE}/coverity-tool")
-	      s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config', path: 'coverity-tool/coverity_tools.tgz')
+	      s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config', path: 'coverity/coverity_tools.tgz')
         }
 
 	stage('Tarball Download') {
