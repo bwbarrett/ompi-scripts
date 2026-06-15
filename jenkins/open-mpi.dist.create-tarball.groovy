@@ -153,7 +153,7 @@ make distcheck VERBOSE=1"""
 tar xf ${tarball}
 cd openmpi-*
 ./configure --prefix=$WORKSPACE/openmpi-install
-make -j 8 all
+make -j 8 all V=1
 make check VERBOSE=1
 make install"""
       }

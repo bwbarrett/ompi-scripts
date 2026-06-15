@@ -512,7 +512,7 @@ if test $run_test != 0; then
     cd ${HOME}/ompi
     ./autogen.pl
     ./configure --prefix=$HOME/install
-    ${MAKE_CMD} -j 4 all
+    ${MAKE_CMD} -j 4 all V=1
     if test "${skip_make_check}" = "0" ; then
         ${MAKE_CMD} check VERBOSE=1
     fi

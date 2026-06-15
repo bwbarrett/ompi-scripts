@@ -211,7 +211,7 @@ if test "${MAKE_DISTCHECK}" != ""; then
 fi
 
 echo "--> running make ${MAKE_J} ${MAKE_ARGS} all"
-make ${MAKE_J} ${MAKE_ARGS} all
+make ${MAKE_J} ${MAKE_ARGS} all V=1
 echo "--> running make check"
 make ${MAKE_ARGS} check VERBOSE=1
 echo "--> running make install"
@@ -231,7 +231,7 @@ ompi_info
 
 echo "--> running make all in examples"
 cd "${WORKSPACE}/src/examples"
-make ${MAKE_ARGS} all
+make ${MAKE_ARGS} all V=1
 cd ..
 
 # it's hard to determine what the failure was and there's no printing
