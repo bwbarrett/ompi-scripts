@@ -88,7 +88,7 @@ class OMPIBuilder(Builder.Builder):
             # setup, we don't.  But be advised that this may need to change in the
             # future...
             child_env['LD_LIBRARY_PATH'] = ''
-            self.call(['make', 'distcheck'], build_call=True, env=child_env)
+            self.call(['make', 'distcheck', 'VERBOSE=1'], build_call=True, env=child_env)
         finally:
             os.chdir(cwd)
 

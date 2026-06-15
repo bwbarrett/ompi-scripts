@@ -130,7 +130,7 @@ parallel (
 tar xf ${tarball}
 cd openmpi-*
 ./configure
-make distcheck"""
+make distcheck VERBOSE=1"""
       }
     }
   },
@@ -154,7 +154,7 @@ tar xf ${tarball}
 cd openmpi-*
 ./configure --prefix=$WORKSPACE/openmpi-install
 make -j 8 all
-make check
+make check VERBOSE=1
 make install"""
       }
     }

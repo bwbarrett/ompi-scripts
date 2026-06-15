@@ -420,7 +420,7 @@ class Builder(object):
             else:
                 self.call(["autoreconf", "-if"], build_call=True)
                 self.call(["./configure"], build_call=True)
-                self.call(["make", "distcheck"], build_call=True)
+                self.call(["make", "distcheck", "VERBOSE=1"], build_call=True)
         finally:
             os.chdir(cwd)
 

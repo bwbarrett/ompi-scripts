@@ -514,7 +514,7 @@ if test $run_test != 0; then
     ./configure --prefix=$HOME/install
     ${MAKE_CMD} -j 4 all
     if test "${skip_make_check}" = "0" ; then
-        ${MAKE_CMD} check
+        ${MAKE_CMD} check VERBOSE=1
     fi
     ${MAKE_CMD} install
     if test "${skip_make_dist}" = "0" ; then

@@ -206,14 +206,14 @@ fi
 # the build-in make check tests.
 if test "${MAKE_DISTCHECK}" != ""; then
     echo "--> running make ${MAKE_ARGS} distcheck"
-    make ${MAKE_ARGS} distcheck
+    make ${MAKE_ARGS} distcheck VERBOSE=1
     exit 0
 fi
 
 echo "--> running make ${MAKE_J} ${MAKE_ARGS} all"
 make ${MAKE_J} ${MAKE_ARGS} all
 echo "--> running make check"
-make ${MAKE_ARGS} check
+make ${MAKE_ARGS} check VERBOSE=1
 echo "--> running make install"
 make ${MAKE_ARGS} install
 
