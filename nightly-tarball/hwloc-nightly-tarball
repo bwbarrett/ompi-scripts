@@ -31,7 +31,7 @@ config_data = { 'project_name' : 'hwloc',
                                'project_name' : 'hwloc',
                                'project_prefix' : 'hwloc',
                                'configure_args' : '',
-                               'make_args' : '-j 8 check',
+                               'make_args' : '-j 8 check VERBOSE=1',
                                'email' : 'brice.goglin@labri.fr' },
                 'branches' : { 'master' : { 'output_location' : 'master/',
                                             'coverity' : False,
@@ -103,7 +103,7 @@ class HwlocBuilder(OMPIBuilder.OMPIBuilder):
             # future...
             child_env['LD_LIBRARY_PATH'] = ''
             self.call(['make', 'doc'], build_call=True, env=child_env)
-            self.call(['make', 'distcheck'], build_call=True, env=child_env)
+            self.call(['make', 'distcheck', 'VERBOSE=1'], build_call=True, env=child_env)
         finally:
             os.chdir(cwd)
 
