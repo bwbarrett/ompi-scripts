@@ -19,6 +19,14 @@ echo "build_prefix: ${build_prefix}"
 echo "tarball: ${tarball}"
 echo "branch: ${branch}"
 
+if test -r "${HOME}/ompi-setup-python.sh" ; then
+    echo "--> Initializing Python environment"
+    . ${HOME}/ompi-setup-python.sh
+    find . -name "requirements.txt" -exec ${PIP_CMD} install -r {} \;
+else
+    echo "--> No Python environment found, hoping for the best."
+fi
+
 aws s3 cp "${build_prefix}/${tarball}" "${WORKSPACE}/dist-files/${tarball}"
 tar xf ${WORKSPACE}/dist-files/${tarball}
 directory=`echo ${tarball} | sed -e 's/\(.*\)\.tar\..*/\1/'`
