@@ -12,8 +12,8 @@
 
 import java.text.SimpleDateFormat
 
-def rpm_builder = 'amazon_linux_2'
-def manpage_builder = 'ubuntu_20.04'
+def rpm_builder = 'amazon_linux_2023-x86_64'
+def manpage_builder = 'ubuntu_26.04-x86_64'
 
 def release_version
 def branch
@@ -147,7 +147,7 @@ make distcheck VERBOSE=1"""
   },
 
   "tarball test suites" : {
-    node('gcc10') {
+    node(rpm_builder) {
       stage('Tarball Test Build') {
 	remove_build_directory('openmpi-*')
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
