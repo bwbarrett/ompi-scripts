@@ -128,7 +128,8 @@ parallel (
 	remove_build_directory('openmpi-*')
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
 tar xf ${tarball}
-cd openmpi-*
+ompidir=`tar tzf ${tarball} | head -n 1`
+ompidir=`basename ${ompidir}`
 ./configure
 make distcheck VERBOSE=1"""
       }
@@ -151,7 +152,9 @@ make distcheck VERBOSE=1"""
 	remove_build_directory('openmpi-*')
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
 tar xf ${tarball}
-cd openmpi-*
+ompidir=`tar tzf ${tarball} | head -n 1`
+ompidir=`basename ${ompidir}`
+cd ${ompidir}
 ./configure --prefix=$WORKSPACE/openmpi-install
 make -j 8 all V=1
 make check VERBOSE=1
