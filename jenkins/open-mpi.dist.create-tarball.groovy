@@ -136,15 +136,15 @@ make distcheck VERBOSE=1"""
     }
   },
 
-  "rpm test suites" : {
-    node(rpm_builder) {
-      stage('RPM Build') {
-	prep_rpm_environment();
-	checkout_code();
-	sh "/bin/bash ${WORKSPACE}/ompi-scripts/jenkins/open-mpi.dist.create-tarball.build-rpm.sh ${build_prefix} ${srpm_name}"
-      }
-    }
-  },
+//  "rpm test suites" : {
+//    node(rpm_builder) {
+//      stage('RPM Build') {
+//	prep_rpm_environment();
+//	checkout_code();
+//	sh "/bin/bash ${WORKSPACE}/ompi-scripts/jenkins/open-mpi.dist.create-tarball.build-rpm.sh ${build_prefix} ${srpm_name}"
+//      }
+//    }
+//  },
 
   "tarball test suites" : {
     node(rpm_builder) {
