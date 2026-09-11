@@ -172,7 +172,7 @@ def prep_rpm_environment() {
 
 // delete build directory (relative to WORKSPACE), dealing with the autotools silly permissions
 def remove_build_directory(dirname) {
-  sh """if ls -1 ${dirname} ; then
+  sh """if compgen -G ${dirname} > /dev/null ; then
     chmod -R u+w ${dirname}
     rm -rf ${dirname}
 fi"""
