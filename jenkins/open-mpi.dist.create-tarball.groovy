@@ -129,7 +129,7 @@ parallel (
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
 tar xf ${tarball}
 ompidir=`tar tzf ${tarball} | head -n 1`
-ompidir=`basename "\\$ompidir"`
+ompidir=`basename \$ompidir`
 ./configure
 make distcheck VERBOSE=1"""
       }
@@ -153,8 +153,8 @@ make distcheck VERBOSE=1"""
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
 tar xf ${tarball}
 ompidir=`tar tzf ${tarball} | head -n 1`
-ompidir=`basename ${ompidir}`
-cd ${ompidir}
+ompidir=`basename \$ompidir`
+cd \$ompidir
 ./configure --prefix=$WORKSPACE/openmpi-install
 make -j 8 all V=1
 make check VERBOSE=1
