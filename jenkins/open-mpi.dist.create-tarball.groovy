@@ -130,6 +130,7 @@ parallel (
 tar xf ${tarball}
 ompidir=`tar tzf ${tarball} | head -n 1`
 ompidir=`basename \$ompidir`
+cd \$ompidir
 ./configure
 make distcheck VERBOSE=1"""
       }
