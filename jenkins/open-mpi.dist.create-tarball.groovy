@@ -129,7 +129,7 @@ parallel (
 	sh """aws s3 cp ${build_prefix}/${tarball} ${tarball}
 tar xf ${tarball}
 ompidir=`tar tzf ${tarball} | head -n 1`
-ompidir=`basename \\${ompidir}`
+ompidir=`basename "\\$ompidir"`
 ./configure
 make distcheck VERBOSE=1"""
       }
