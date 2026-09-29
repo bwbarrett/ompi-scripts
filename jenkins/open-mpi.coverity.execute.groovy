@@ -22,14 +22,14 @@ node("ubuntu_26.04-x86_64") {
 
     stage('Fetch Coverity Tool') {
         sh("mkdir -p ${WORKSPACE}/coverity-tool")
-	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
+        s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
                    path: 'coverity/coverity_tools.tgz', force: true)
-	sh('cd coverity-tool ; tar xf coverity_tools.tgz')
-	def cov_bin
-	cov_bin = sh(script: "find ${WORKSPACE}/coverity-tool -name \"cov-build\" -print",
-		     returnStdout: true).trim()
-	cov_bin = sh(script: "dirname ${cov_bin}", returnStdout: true).trim()
-	echo "path: ${cov_bin}"
+        sh('cd coverity-tool ; tar xf coverity_tools.tgz')
+        def cov_bin
+        cov_bin = sh(script: "find ${WORKSPACE}/coverity-tool -name \"cov-build\" -print",
+                     returnStdout: true).trim()
+        coverity_path = sh(script: "dirname ${cov_bin}", returnStdout: true).trim()
+        echo "path: ${coverity_path}"
     }
 
     stage('Fetch Open MPI') {
@@ -43,23 +43,28 @@ node("ubuntu_26.04-x86_64") {
         sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${ompi_tarball_name}")
         sh("tar xf ${ompi_tarball_name}")
 
-	def matcher = ("${ompi_tarball_name}" =~ /(.*)\.tar\..*/)
-	if (matcher) {
-	    ompi_dir = matcher[0][1]
-	    echo "ompi_dir: ${ompi_dir}"
-	} else{
-	    error "Cannot find ompi directory from ${ompi_tarball_name}"
-	}
+        def matcher = ("${ompi_tarball_name}" =~ /(.*)\.tar\..*/)
+        if (matcher) {
+            ompi_dir = matcher[0][1]
+            echo "ompi_dir: ${ompi_dir}"
+        } else{
+            error "Cannot find ompi directory from ${ompi_tarball_name}"
+        }
     }
 
     stage('Configure Open MPI') {
-	sh("cd ${WORKSPACE}/${ompi_dir} && ./configure")
+        sh("cd ${WORKSPACE}/${ompi_dir} && ./configure --enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-usnic")
     }
 
     stage('Building Open MPI') {
-	withEnv(["PATH+EXTRA=${coverity_path}"]) {
-	    sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
-	}
+        withEnv(["PATH+EXTRA=${coverity_path}"]) {
+            sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
+        }
+    }
+
+    stage('Submit Results') {
+        sh("tar jcf ${WORKSPACE}/submission.tar.bz2 cov-int")
+        sh("curl --form token=\"\" --form email=\"jsquyres@cisco.com\" --form file=@${WORKSPACE}/submission.tar.bz2 --form version=\"1.0.0\"  --form description=\"nightly-master\" \"https://scan.coverity.com/builds?project=Open MPI\"")
     }
 
     stage('Cleanup') {
