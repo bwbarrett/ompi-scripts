@@ -10,6 +10,7 @@
 def snapshot_version = ""
 def ompi_tarball_name = ""
 def ompi_dir = ""
+def ompi_version = ""
 def coverity_path = ""
 
 currentBuild.displayName = "#${currentBuild.number}"
@@ -43,12 +44,13 @@ node("ubuntu_26.04-x86_64") {
         sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${ompi_tarball_name}")
         sh("tar xf ${ompi_tarball_name}")
 
-        def matcher = ("${ompi_tarball_name}" =~ /(.*)\.tar\..*/)
+        def matcher = ("${ompi_tarball_name}" =~ /^openmpi-(.*)\.tar\..*/)
         if (matcher) {
-            ompi_dir = matcher[0][1]
+            ompi_version = matcher[0][1]
+	    ompi_dir="openmpi-${ompi_version}"
             echo "ompi_dir: ${ompi_dir}"
         } else{
-            error "Cannot find ompi directory from ${ompi_tarball_name}"
+            error "Cannot find ompi version and directory from ${ompi_tarball_name}"
         }
     }
 
@@ -64,7 +66,11 @@ node("ubuntu_26.04-x86_64") {
 
     stage('Submit Results') {
         sh("tar jcf ${WORKSPACE}/submission.tar.bz2 cov-int")
-        sh("curl --form token=\"\" --form email=\"jsquyres@cisco.com\" --form file=@${WORKSPACE}/submission.tar.bz2 --form version=\"1.0.0\"  --form description=\"nightly-master\" \"https://scan.coverity.com/builds?project=Open MPI\"")
+        withCredentials([usernamePassword(credentialsId: 'b47cf375-6e78-4f1f-b215-18a7903a4763',
+                                          passwordVariable: 'token',
+                                          usernameVariable: 'project')]) {
+            sh("curl --form token=\"$token\" --form email=\"jsquyres@cisco.com\" --form file=@${WORKSPACE}/submission.tar.bz2 --form version=\"${ompi_version}\"  --form description=\"nightly-master\" \"https://scan.coverity.com/builds?project=$project\"")
+	}
     }
 
     stage('Cleanup') {
