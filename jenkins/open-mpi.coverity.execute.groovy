@@ -4,14 +4,12 @@
 //
 //
 // WORKSPACE Layout:
-//   scratch/
 //   ompi-scripts/         ompi-scripts master checkout
-//   build/                build root
-
-def coverity_tool = "https://scan.coverity.com/download/cxx/linux64"
+//   coverity-tool/        Coverity tool build
 
 def snapshot_version = ""
-def tarball_name = ""
+def ompi_tarball_name = ""
+def ompi_dir = ""
 
 currentBuild.displayName = "#${currentBuild.number}"
 currentBuild.description = "Coverity Nightly Build for Open MPI\n"
@@ -21,28 +19,46 @@ node("ubuntu_26.04-x86_64") {
         checkout(changelog: false, poll: false, scm: scm)
     }
 
-    stage('Coverity Tools Download') {
+    stage('Fetch Coverity Tool') {
         sh("mkdir -p ${WORKSPACE}/coverity-tool")
-	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config', path: 'coverity/coverity_tools.tgz', force: true)
+	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
+                   path: 'coverity/coverity_tools.tgz', force: true)
+	sh('cd coverity-tool ; tar xf coverity_tools.tgz')
     }
 
-    stage('Tarball Download') {
+    stage('Fetch Open MPI') {
         sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/latest_snapshot.txt")
         snapshot_version = sh(script: "cat latest_snapshot.txt", returnStdout: true).trim()
 
         currentBuild.displayName = "${currentBuild.displayName} - ${snapshot_version}"
         currentBuild.description = "${currentBuild.description} for version ${snapshot_version}"
 
-        tarball_name = "openmpi-${snapshot_version}.tar.gz"
-        sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${tarball_name}")
-        sh("ls -lR ${WORKSPACE}")
+        ompi_tarball_name = "openmpi-${snapshot_version}.tar.gz"
+        sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${ompi_tarball_name}")
+        sh("tar xf ${ompi_tarball_name}")
+
+	def matcher = (${ompi_tarball_name} =~ /(.*)\.tar\..*/)
+	if (matcher) {
+	    ompi_dir = matcher[0][1]
+	    echo "ompi_dir: ${ompi_dir}"
+	} else{
+	    echo "no ompi_dir :("
+	}
     }
 
-    stage('Coverity Build') {
-        sh("python3 ${WORKSPACE}/ompi-scripts/nightly-tarball/Coverity.py --log-level DEBUG --build-root ${WORKSPACE}/build --source-tarball ${WORKSPACE}/${tarball_name} --tool-dir ${WORKspace}/coverity-tool --tool-url https://scan.coverity.com/download/cxx/linux64 --project-name 'Open MPI' --project-prefix openmpi --token-file /dev/null --email foo@bar.com")
+    stage('Configure Open MPI') {
+            sh("""
+./configure
+"""))
     }
 
-    stage('Coverity Cleanup') {
-        sh("rm -rf ${WORKSPACE}/coverity-tool")
+    stage('Building Open MPI') {
+            sh("""
+cov-build --dir cov-int make
+"""))
+    }
+
+    stage('Cleanup') {
+        sh("rm -rf ${WORKSPACE}/*")
     }
 }
