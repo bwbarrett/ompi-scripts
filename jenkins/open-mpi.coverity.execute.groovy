@@ -57,7 +57,7 @@ node("ubuntu_26.04-x86_64") {
     }
 
     stage('Building Open MPI') {
-	withEnv(["PATH+EXTRA=${cov_bin}"]) {
+	withEnv(["PATH+EXTRA=${coverity_path}"]) {
 	    sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
 	}
     }
