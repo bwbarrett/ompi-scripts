@@ -24,7 +24,9 @@ node("ubuntu_26.04-x86_64") {
 	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
                    path: 'coverity/coverity_tools.tgz', force: true)
 	sh('cd coverity-tool ; tar xf coverity_tools.tgz')
-	sh('pwd ; find . -name "cov-build" -print')
+	cov_bin = sh(script: 'find ${WORKSPACE}/coverity-tool -name "cov-build" -print | basename',
+		     returnStdout: true).trim()
+	echo "path: ${cov_bin}"
     }
 
     stage('Fetch Open MPI') {
