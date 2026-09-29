@@ -24,6 +24,7 @@ node("ubuntu_26.04-x86_64") {
 	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
                    path: 'coverity/coverity_tools.tgz', force: true)
 	sh('cd coverity-tool ; tar xf coverity_tools.tgz')
+	sh('ls -lR')
     }
 
     stage('Fetch Open MPI') {
@@ -42,14 +43,16 @@ node("ubuntu_26.04-x86_64") {
 	    ompi_dir = matcher[0][1]
 	    echo "ompi_dir: ${ompi_dir}"
 	} else{
-	    echo "no ompi_dir :("
+	    error "Cannot find ompi directory from ${ompi_tarball_name}"
 	}
     }
 
     stage('Configure Open MPI') {
+	sh("cd ${WORKSPACE}/${ompi_dir} && ./configure")
     }
 
     stage('Building Open MPI') {
+	sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
     }
 
     stage('Cleanup') {
