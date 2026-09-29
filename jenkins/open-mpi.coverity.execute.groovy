@@ -37,7 +37,7 @@ node("ubuntu_26.04-x86_64") {
         sh("curl --fail -O https://download.open-mpi.org/nightly/open-mpi/main/${ompi_tarball_name}")
         sh("tar xf ${ompi_tarball_name}")
 
-	def matcher = (${ompi_tarball_name} =~ /(.*)\.tar\..*/)
+	def matcher = ("${ompi_tarball_name}" =~ /(.*)\.tar\..*/)
 	if (matcher) {
 	    ompi_dir = matcher[0][1]
 	    echo "ompi_dir: ${ompi_dir}"
@@ -47,15 +47,9 @@ node("ubuntu_26.04-x86_64") {
     }
 
     stage('Configure Open MPI') {
-            sh("""
-./configure
-"""))
     }
 
     stage('Building Open MPI') {
-            sh("""
-cov-build --dir cov-int make
-"""))
     }
 
     stage('Cleanup') {
