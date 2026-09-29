@@ -10,6 +10,7 @@
 def snapshot_version = ""
 def ompi_tarball_name = ""
 def ompi_dir = ""
+def coverity_path = ""
 
 currentBuild.displayName = "#${currentBuild.number}"
 currentBuild.description = "Coverity Nightly Build for Open MPI\n"
@@ -24,8 +25,10 @@ node("ubuntu_26.04-x86_64") {
 	s3Download(file:'coverity-tool/coverity_tools.tgz', bucket:'ompi-jenkins-config',
                    path: 'coverity/coverity_tools.tgz', force: true)
 	sh('cd coverity-tool ; tar xf coverity_tools.tgz')
-	cov_bin = sh(script: 'find ${WORKSPACE}/coverity-tool -name "cov-build" -print | xargs  basename',
+	def cov_bin
+	cov_bin = sh(script: "find ${WORKSPACE}/coverity-tool -name \"cov-build\" -print",
 		     returnStdout: true).trim()
+	cov_bin = sh(script: "dirname ${cov_bin}", returnStdout: true).trim()
 	echo "path: ${cov_bin}"
     }
 
@@ -54,10 +57,10 @@ node("ubuntu_26.04-x86_64") {
     }
 
     stage('Building Open MPI') {
-	environment {
-	    PATH = "PATH+EXTRA=${cov_bin}"
-	    sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
-	}
+//	environment {
+//	    PATH = "PATH+EXTRA=${cov_bin}"
+//	    sh("cd ${WORKSPACE}/${ompi_dir} && cov-build --dir cov-int make")
+//	}
     }
 
     stage('Cleanup') {
