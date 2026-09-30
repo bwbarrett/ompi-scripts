@@ -55,7 +55,7 @@ node("ubuntu_26.04-x86_64") {
     }
 
     stage('Configure Open MPI') {
-        sh("cd ${WORKSPACE}/${ompi_dir} && ./configure --enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran --with-usnic")
+        sh("cd ${WORKSPACE}/${ompi_dir} && ./configure --enable-debug --enable-mpi-fortran --enable-mpi-java --enable-oshmem --enable-oshmem-fortran")
     }
 
     stage('Building Open MPI') {
@@ -69,7 +69,7 @@ node("ubuntu_26.04-x86_64") {
         withCredentials([usernamePassword(credentialsId: 'b47cf375-6e78-4f1f-b215-18a7903a4763',
                                           passwordVariable: 'token',
                                           usernameVariable: 'project')]) {
-            sh("curl --form token=\"$token\" --form email=\"jsquyres@cisco.com\" --form file=@${WORKSPACE}/submission.tar.bz2 --form version=\"${ompi_version}\"  --form description=\"nightly-master\" \"https://scan.coverity.com/builds?project=$project\"")
+            sh("curl --form token=\"$token\" --form email=\"bbarrett@amazon.com\" --form file=@${WORKSPACE}/submission.tar.bz2 --form version=\"${ompi_version}\"  --form description=\"nightly-master\" \"https://scan.coverity.com/builds?project=$project\"")
 	}
     }
 
