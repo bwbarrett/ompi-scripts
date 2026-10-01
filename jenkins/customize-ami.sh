@@ -23,6 +23,11 @@ pandoc_arm_url="s3://ompi-jenkins-config/pandoc-2.14.2-linux-arm64.tar.gz"
 awscli_x86_url="https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip"
 awscli_arm_url="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
 
+libfabric_url="https://github.com/ofiwg/libfabric/releases/download/v2.7.0/libfabric-2.7.0.tar.bz2"
+ucx_url="https://github.com/openucx/ucx/releases/download/v1.22.0/ucx-1.22.0.tar.gz"
+xpmem_repo="https://github.com/hpc/xpmem.git"
+kdreg2_repo="https://github.com/HewlettPackard/shs-kdreg2.git"
+
 labels="ec2"
 
 os=`uname -s`
@@ -505,13 +510,52 @@ if test "${venv_preflight_modules}" != "" ; then
 fi
 find ompi -name "requirements.txt" -exec ${PIP_CMD} install -r {} \;
 
+ompi_configure_args=""
+
+if test "$PLATFORM_ID" != "FreeBSD" ; then
+    echo "==> Installing dependency packages"
+    cd  ${HOME}
+    mkdir -p ${HOME}/packages/src
+
+    if ! test -d ${HOME}/packages/libfabric ; then
+        echo "--> Installing Libfabric"
+        cd ${HOME}/packages/src
+        curl -OL ${libfabric_url}
+        tarball=`find . -name "libfabric*" -print | head -n 1`
+        tar xf ${tarball}
+        directory=`echo ${tarball} | sed -e 's/\(.*\)\.tar\..*/\1/'`
+        cd ${directory}
+        ./configure --prefix=${HOME}/packages/libfabric
+        ${MAKE_CMD} -j 4 all
+        ${MAKE_CMD} install
+    else
+        echo "--> Libfabric already installed"
+    fi
+    ompi_configure_args="${ompi_configure_args} --with-libfabric=${HOME}/packages/libfabric"
+
+    if ! test -d ${HOME}/packages/ucx ; then
+        echo "--> Installing UCX"
+        cd ${HOME}/packages/src
+        curl -OL ${ucx_url}
+        tarball=`find . -name "ucx*" -print | head -n 1`
+        tar xf ${tarball}
+        directory=`echo ${tarball} | sed -e 's/\(.*\)\.tar\..*/\1/'`
+        cd ${directory}
+        ./configure --prefix=${HOME}/packages/ucx
+        ${MAKE_CMD} -j 4 all
+        ${MAKE_CMD} install
+    else
+        echo "--> UCX already installed"
+    fi
+    ompi_configure_args="${ompi_configure_args} --with-ucx=${HOME}/packages/ucx"
+fi
 
 if test $run_test != 0; then
     # for these tests, fail the script if a test fails
     echo "==> Running Compile test"
     cd ${HOME}/ompi
     ./autogen.pl
-    ./configure --prefix=$HOME/install
+    ./configure --prefix=$HOME/install ${ompi_configure_args}
     ${MAKE_CMD} -j 4 all V=1
     if test "${skip_make_check}" = "0" ; then
         ${MAKE_CMD} check VERBOSE=1
