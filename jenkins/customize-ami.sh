@@ -25,6 +25,7 @@ awscli_arm_url="https://awscli.amazonaws.com/awscli-exe-linux-aarch64.zip"
 
 libfabric_url="https://github.com/ofiwg/libfabric/releases/download/v2.7.0/libfabric-2.7.0.tar.bz2"
 ucx_url="https://github.com/openucx/ucx/releases/download/v1.22.0/ucx-1.22.0.tar.gz"
+xpmem_repo="https://github.com/hpc/xpmem.git"
 
 labels="ec2"
 
@@ -70,6 +71,13 @@ pandoc_installed=0
 skip_make_check=0
 skip_make_dist=0
 venv_preflight_modules=
+
+# Whether to build and install the XPMEM / kdreg2 *kernel modules* (in addition
+# to the userspace library/headers, which are always installed on Linux).
+# Building a kernel module requires a kernel-devel/headers package that matches
+# the running kernel and source that compiles against it; only platforms known
+# to satisfy both opt in below.
+build_xpmem_kmod=0
 
 PIP_CMD="pip3"
 MAKE_CMD="make"
@@ -305,6 +313,16 @@ case $PLATFORM_ID in
                   python3 python3-devel python3-pip \
                   hwloc hwloc-devel libevent libevent-devel \
                   python3-mock python3-boto3
+                # Build the XPMEM kernel module on AL2023: the CI tests
+                # exercise it.  AL2023 ships its kernel-devel/headers under a
+                # version-prefixed package name (e.g. kernel6.18-devel), not the
+                # generic "kernel-devel" (which tracks a different, older kernel
+                # stream).  Derive the prefix from the running kernel's
+                # major.minor so this keeps working as the kernel moves.
+                kver_mm=`uname -r | grep -oE '^[0-9]+\.[0-9]+'`
+                sudo yum -y install "kernel${kver_mm}-devel" "kernel${kver_mm}-headers" \
+                  elfutils-libelf-devel
+                build_xpmem_kmod=1
                 labels="${labels} linux amazon_linux_2023-${arch}"
                 ;;
             *)
@@ -652,6 +670,41 @@ if test "$PLATFORM_ID" != "FreeBSD" ; then
     echo "==> Installing dependency packages"
     cd  ${HOME}
     mkdir -p ${HOME}/packages/src
+
+    if ! test -f /usr/include/xpmem.h ; then
+        echo "--> Installing XPMEM"
+        cd ${HOME}/packages/src
+        git clone ${xpmem_repo} xpmem
+        cd xpmem
+        ./autogen.sh
+        if test "${build_xpmem_kmod}" = "1" ; then
+            # Build the kernel module (default) plus the userspace library and
+            # headers, all installed into /usr.  The CI tests exercise XPMEM,
+            # so the module needs to be present and loaded.
+            if ! test -e /lib/modules/`uname -r`/build/Module.symvers ; then
+                echo "ERROR: no kernel build tree for `uname -r`; cannot build XPMEM module"
+                exit 1
+            fi
+            ./configure --prefix=/usr
+            ${MAKE_CMD} -j 4 all
+            sudo ${MAKE_CMD} install
+            # Load the module now and on every boot.
+            echo xpmem | sudo tee /etc/modules-load.d/xpmem.conf > /dev/null
+            sudo depmod -a
+            sudo modprobe xpmem || true
+        else
+            # Build only the userspace library and headers.  The kernel module
+            # is skipped where a matching kernel-devel package is unavailable or
+            # the module does not compile against the running kernel; downstream
+            # libraries (libfabric, UCX, Open MPI) only need libxpmem and
+            # <xpmem.h>.
+            ./configure --prefix=/usr --disable-kernel-module
+            ${MAKE_CMD} -j 4 all
+            sudo ${MAKE_CMD} install
+        fi
+    else
+        echo "--> XPMEM already installed"
+    fi
 
     if ! test -d ${HOME}/packages/libfabric ; then
         echo "--> Installing Libfabric"
