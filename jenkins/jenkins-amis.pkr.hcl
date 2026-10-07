@@ -554,6 +554,30 @@ source "amazon-ebs" "SLES15-x86" {
   source_ami   = "${data.amazon-ami.SLES15-x86.id}"
   ssh_pty      = true
   ssh_username = "ec2-user"
+  # SLES 15's base image ships KbdInteractiveAuthentication yes, which (via
+  # PAM) permits password logins even with PasswordAuthentication no.  The
+  # automated security scanner probes freshly launched instances within
+  # minutes and isolates any that still accept password auth, which was
+  # quarantining the SLES 15 builder mid-provision before customize-ami.sh
+  # could harden sshd.  Harden it in user-data instead, so cloud-init applies
+  # it during boot -- before Packer even connects -- leaving no exposure
+  # window.  (customize-ami.sh still bakes the same drop-in into the image so
+  # that downstream instances launched from the AMI are hardened regardless of
+  # their own user-data.)  SLES is the only distro that needs this; the others
+  # default to password auth off.
+  user_data = <<-EOF
+    #cloud-config
+    ssh_pwauth: false
+    write_files:
+      - path: /etc/ssh/sshd_config.d/99-open-mpi-disable-password-auth.conf
+        permissions: '0644'
+        content: |
+          # Added by Open MPI (packer user-data): never allow password logins.
+          PasswordAuthentication no
+          KbdInteractiveAuthentication no
+    runcmd:
+      - [ sh, -c, "systemctl reload sshd 2>/dev/null || systemctl restart sshd 2>/dev/null || true" ]
+  EOF
   tags = {
     BuildType = "${var.BuildType}",
     JenkinsBuilderAmi = "True"
