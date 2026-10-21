@@ -125,6 +125,22 @@ parallel (
 	sh "/bin/bash ompi-scripts/jenkins/open-mpi.dist.create-tarball.tarball-distcheck.sh ${build_prefix} ${tarball}"
       }
     }
+  },
+
+  "tarball build check" : {
+    node(rpm_builder) {
+      stage('Tarball Build Check') {
+	// Strip /usr/local/bin from PATH (where pandoc lives) in Groovy and
+	// inject it with withEnv, so the tarball build runs without pandoc on
+	// PATH.  The script itself does not activate the venv or add the
+	// Autotools to PATH, so a tarball that has regressed into needing any
+	// of the git-only build tooling fails here.
+	def cleanPath = env.PATH.split(':').findAll { it != '/usr/local/bin' }.join(':')
+	withEnv(["PATH=${cleanPath}"]) {
+	  sh "/bin/bash ompi-scripts/jenkins/open-mpi.dist.create-tarball.tarball-build-check.sh ${build_prefix} ${tarball}"
+	}
+      }
+    }
   }
 )
 
